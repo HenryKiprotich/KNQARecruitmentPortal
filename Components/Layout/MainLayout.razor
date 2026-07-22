@@ -1,0 +1,33 @@
+﻿@inherits LayoutComponentBase
+@using MudBlazor
+
+<MudThemeProvider />
+<MudDialogProvider MaxWidth="MaxWidth.Small" FullWidth="false" CloseButton="true" BackdropClick="false" />
+<MudSnackbarProvider />
+
+<div class="page" style="display: flex; min-height: 100vh; font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC;">
+
+    <!-- Unified Sidebar with RBAC-aware Navigation -->
+    <div class="sidebar" style="width: 280px; background-color: #0d2353; color: white; flex-shrink: 0; box-shadow: 4px 0 20px rgba(13, 35, 83, 0.08);">
+        <NavMenu />
+    </div>
+
+    <!-- Main Content Area -->
+    <main style="flex-grow: 1; display: flex; flex-direction: column; overflow-x: hidden;">
+
+        <!-- Top Header Bar -->
+        <div style="background-color: #ffffff; height: 56px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: flex-end; padding: 0 32px; box-shadow: 0 2px 4px rgba(0,0,0,0.01);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 0.82rem; font-weight: 700; color: #475569; background-color: #F1F5F9; padding: 6px 12px; border-radius: 20px; display: flex; align-items: center; gap: 6px;">
+                    🟢 Active Session (KNQA-2026)
+                </span>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div style="flex-grow: 1; padding: 12px;">
+            @Body
+        </div>
+
+    </main>
+</div>

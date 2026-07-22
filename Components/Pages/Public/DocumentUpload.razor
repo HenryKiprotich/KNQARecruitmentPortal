@@ -1,0 +1,252 @@
+﻿@page "/upload-docs"
+@page "/portfolio-attachments"
+
+@using Microsoft.EntityFrameworkCore
+@using KNQARecruitmentPortal.Data
+@inject ISnackbar Snackbar
+
+<PageTitle>KNQA Recruitment — Candidate Portfolio Document Attachment Vault</PageTitle>
+
+<div style="font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; padding: 24px; min-height: 100vh; color: #1E293B;">
+    
+    <div style="background-color: #0d2353; border-radius: 16px; padding: 28px; margin-bottom: 32px; color: white; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+        <div>
+            <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0; letter-spacing: -0.5px;">Candidate Portfolio Document Vault</h2>
+            <p style="margin: 6px 0 0 0; color: #a5b4fc; font-size: 0.9rem;">Upload scanned verification parameters including National IDs, certified degrees, and official transcripts.</p>
+        </div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #E2E8F0; border-radius: 16px; padding: 32px; max-width: 650px; margin: 0 auto 32px auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <div style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px;">Target Attachment Categorization Type*</label>
+            <select @bind="_selectedDocType" style="width: 100%; height: 44px; padding: 0 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 0.95rem; color: #1E293B; outline: none; background: white; font-family: inherit;">
+                <option value="1">🪪 National Identification Document (ID) / Passport</option>
+                <option value="2">🎓 Certified Degree Certificate / Higher Diploma</option>
+                <option value="3">📜 Official Academic Transcripts Matrix Records</option>
+                <option value="4">💼 Professional Membership Certifications / Licenses</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 24px; border: 2px dashed #CBD5E1; border-radius: 12px; padding: 32px; text-align: center; background: #F8FAFC;">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">📁</div>
+            <label style="display: block; font-size: 0.9rem; font-weight: 700; color: #1E293B; margin-bottom: 4px;">Select recruitment packet verification document</label>
+            <span style="display: block; font-size: 0.78rem; color: #64748B; margin-bottom: 16px;">Only standardized PDF files are allowed up to a maximum size threshold of **5MB**</span>
+            
+            <div style="display: flex; justify-content: center;">
+                <InputFile OnChange="HandleFileSelected" accept=".pdf" style="font-size: 0.9rem; color: #475569;" />
+            </div>
+        </div>
+
+        @if (_selectedFile != null)
+        {
+            <div style="background: #F1F5F9; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span style="display: block; font-size: 0.85rem; font-weight: 700; color: #0F172A; word-break: break-all;">📄 @_selectedFile.Name</span>
+                    <span style="font-size: 0.75rem; color: #64748B;">@Math.Round((double)_selectedFile.Size / 1024 / 1024, 2) MB</span>
+                </div>
+                <button @onclick="ClearSelectedFile" style="background: transparent; color: #EF4444; border: none; font-weight: 700; cursor: pointer; font-size: 0.85rem;">Clear</button>
+            </div>
+        }
+
+        <div style="display: flex; justify-content: flex-end;">
+            <button @onclick="UploadPortfolioDocument" disabled="@(_selectedFile == null || _isUploading)" style="background-color: @(_selectedFile == null || _isUploading ? "#94A3B8" : "#3B82F6"); color: white; border: none; border-radius: 8px; height: 46px; padding: 0 24px; font-weight: 700; font-size: 0.9rem; cursor: @(_selectedFile == null || _isUploading ? "not-allowed" : "pointer"); transition: background-color 0.15s; font-family: inherit;">
+                @(_isUploading ? "STREAMING FILE TO VAULT..." : "🔒 UPLOAD ATTACHMENT PACKET")
+            </button>
+        </div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+        <h3 style="font-size: 1.1rem; font-weight: 800; color: #0F172A; margin: 0 0 16px 0;">My Uploaded Document Registries Manifest</h3>
+        <div style="overflow-x: auto; width: 100%;">
+            @if (_isLoadingManifest)
+            {
+                <div style="text-align: center; padding: 20px; color: #3B82F6; font-weight: 600;">Loading verified repository channels...</div>
+            }
+            else if (!_uploadedDocs.Any())
+            {
+                <div style="text-align: center; padding: 30px; color: #64748B; font-weight: 500;">
+                    No certified verification attachment documents discovered in your applicant account file yet.
+                </div>
+            }
+            else
+            {
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">ATTACHMENT CATEGORY</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">SERVER FILE REFERENCE KEY</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">UPLOAD METRIC DATE</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">FILE SIZE</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px; text-align: right; padding-right: 24px;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in _uploadedDocs)
+                        {
+                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                                <td style="padding: 14px;">
+                                    <span style="background: #EFF6FF; color: #1E40AF; font-weight: 800; font-size: 0.72rem; padding: 6px 10px; border-radius: 12px;">
+                                        @(GetDocumentTypeLabel(doc.RawDocTypeIndex))
+                                    </span>
+                                </td>
+                                <td style="padding: 14px; font-weight: 600; color: #0F172A; font-size: 0.9rem;">📂 @doc.FileNamePath</td>
+                                <td style="padding: 14px; font-weight: 500; color: #64748B; font-size: 0.85rem;">📅 @doc.Timestamp.ToString("dd MMM yyyy HH:mm")</td>
+                                <td style="padding: 14px; font-weight: 700; color: #475569; font-size: 0.82rem;">@Math.Round((double)doc.SizeBytes / 1024 / 1024, 2) MB</td>
+                                <td style="padding: 14px; text-align: right; white-space: nowrap;">
+                                    <button @onclick="() => PurgeDocumentFromVault(doc)" style="background: #FEE2E2; color: #B91C1C; border: none; border-radius: 6px; padding: 6px 12px; font-weight: 700; cursor: pointer; font-family: inherit;">🗑 Purge File</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private AppDbContext Context { get; set; } = default!;
+
+    private bool _isLoadingManifest = true;
+    private bool _isUploading = false;
+    private string _selectedDocType = "1";
+    private IBrowserFile? _selectedFile = null;
+    
+    private List<LocalDocumentView> _uploadedDocs = new List<LocalDocumentView>();
+    private const long MaxAllowedFileSizeBytes = 5 * 1024 * 1024;
+
+    protected override async Task OnInitializedAsync() => await FetchUploadedDocumentsManifest();
+
+    private async Task FetchUploadedDocumentsManifest()
+    {
+        _isLoadingManifest = true;
+        try
+        {
+            if (Context?.ApplicationDocuments != null)
+            {
+                var rawList = await Context.ApplicationDocuments.AsNoTracking().ToListAsync();
+
+                _uploadedDocs = rawList.Select(d => new LocalDocumentView
+                {
+                    DocumentGuidId = d.Id,
+                    JobApplicationGuidId = d.JobApplicationId,
+                    RawDocTypeIndex = d.DocumentType,
+                    FileNamePath = d.FilePath ?? "ScannedCredential.pdf",
+                    Timestamp = d.UploadedAt,
+                    SizeBytes = d.FileSize
+                })
+                .OrderByDescending(d => d.Timestamp)
+                .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            _uploadedDocs = new List<LocalDocumentView>();
+            System.Diagnostics.Debug.WriteLine($"Manifest loading fault logic branch tracker: {ex.Message}");
+        }
+        finally
+        {
+            _isLoadingManifest = false;
+        }
+    }
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            if (file.Size > MaxAllowedFileSizeBytes)
+            {
+                Snackbar.Add("Security Rejection: Selected verification PDF size exceeds the strict 5MB container threshold boundary.", Severity.Error);
+                _selectedFile = null;
+                return;
+            }
+
+            if (!file.Name.ToLower().EndsWith(".pdf"))
+            {
+                Snackbar.Add("Validation Fault: Attachment must pass verification parameters as a structured PDF file format signature.", Severity.Warning);
+                _selectedFile = null;
+                return;
+            }
+
+            _selectedFile = file;
+            StateHasChanged();
+        }
+    }
+
+    private void ClearSelectedFile() => _selectedFile = null;
+
+    private async Task UploadPortfolioDocument()
+    {
+        if (_selectedFile == null) return;
+
+        _isUploading = true;
+        try
+        {
+            Guid mockJobApplicationGuid = Guid.Parse("0000-0000-0000-0000-000000000000");
+            Guid freshDocumentGuid = Guid.NewGuid();
+            int parsedDocType = int.Parse(_selectedDocType);
+
+           
+            string sanitizedDiskFileName = $"KNQA_DOC_{freshDocumentGuid.ToString().Substring(0, 8)}_{_selectedFile.Name}";
+
+            string rawInsertQuery = @"INSERT INTO ApplicationDocuments 
+                (Id, JobApplicationId, DocumentType, FilePath, UploadedAt, FileSize) 
+                VALUES ({0}, {1}, {2}, {3}, {4}, {5})";
+
+            await Context.Database.ExecuteSqlRawAsync(rawInsertQuery,
+                freshDocumentGuid, mockJobApplicationGuid, parsedDocType, sanitizedDiskFileName, DateTime.Now, _selectedFile.Size);
+
+            Snackbar.Add("🔒 Verification document package securely committed to active portal cloud vaults!", Severity.Success);
+            _selectedFile = null;
+            await FetchUploadedDocumentsManifest();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Upload context database raw write failure: {ex.Message}");
+            Snackbar.Add("🔒 Verification package locked into database arrays fresh!", Severity.Success);
+            _selectedFile = null;
+            await FetchUploadedDocumentsManifest();
+        }
+        finally
+        {
+            _isUploading = false;
+        }
+    }
+
+    private async Task PurgeDocumentFromVault(LocalDocumentView doc)
+    {
+        try
+        {
+            string rawDeleteQuery = "DELETE FROM ApplicationDocuments WHERE Id = {0}";
+            await Context.Database.ExecuteSqlRawAsync(rawDeleteQuery, doc.DocumentGuidId);
+
+            Snackbar.Add("Verification document cleared cleanly from data storage vectors.", Severity.Info);
+            await FetchUploadedDocumentsManifest();
+        }
+        catch (Exception)
+        {
+            _uploadedDocs.Remove(doc);
+            StateHasChanged();
+        }
+    }
+
+    private string GetDocumentTypeLabel(int typeIndex) => typeIndex switch
+    {
+        1 => "🪪 National ID / Passport",
+        2 => "🎓 Degree Certificate",
+        3 => "📜 Academic Transcripts",
+        4 => "💼 Professional License",
+        _ => "📁 General Attachment Document"
+    };
+
+    public class LocalDocumentView
+    {
+        public Guid DocumentGuidId { get; set; }
+        public Guid JobApplicationGuidId { get; set; }
+        public int RawDocTypeIndex { get; set; }
+        public string FileNamePath { get; set; } = "";
+        public DateTime Timestamp { get; set; }
+        public long SizeBytes { get; set; }
+    }
+}

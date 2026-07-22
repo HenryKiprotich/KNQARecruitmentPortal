@@ -1,0 +1,159 @@
+@page "/login"
+@using KNQARecruitmentPortal.Services
+@using KNQARecruitmentPortal.Authentication
+
+@inject IAuthenticationService AuthService
+@inject CustomAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+@layout EmptyLayout
+
+<PageTitle>Login - KNQA Recruitment Portal</PageTitle>
+
+<div class="login-container">
+    <div class="login-card">
+        <!-- Header -->
+        <div class="login-header">
+            <div class="login-icon">🔐</div>
+            <h1>Welcome Back</h1>
+            <p>Sign in to KNQA Recruitment Portal</p>
+        </div>
+
+        <!-- Form -->
+        <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+            <DataAnnotationsValidator />
+
+            <!-- Error Alert -->
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="error-alert">
+                    <span>⚠️</span>
+                    <span>@errorMessage</span>
+                </div>
+            }
+
+            <!-- Username/Email Input -->
+            <div class="form-group">
+                <label for="username">Username or Email</label>
+                <InputText 
+                    @bind-Value="loginModel.Username" 
+                    id="username"
+                    placeholder="Enter username or email"
+                    class="form-input"
+                />
+                <ValidationMessage For="@(() => loginModel.Username)" class="validation-error" />
+            </div>
+
+            <!-- Password Input -->
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="password-wrapper">
+                    <InputText 
+                        @bind-Value="loginModel.Password" 
+                        id="password"
+                        type="@(showPassword ? "text" : "password")"
+                        placeholder="Enter password"
+                        class="form-input"
+                    />
+                    <button 
+                        type="button"
+                        @onclick="@(() => showPassword = !showPassword)"
+                        class="toggle-password"
+                        title="@(showPassword ? "Hide password" : "Show password")"
+                    >
+                        @if (showPassword)
+                        {
+                            <span>👁️</span>
+                        }
+                        else
+                        {
+                            <span>👁️‍🗨️</span>
+                        }
+                    </button>
+                </div>
+                <ValidationMessage For="@(() => loginModel.Password)" class="validation-error" />
+            </div>
+
+            <!-- Remember Me -->
+            <div class="remember-me">
+                <input type="checkbox" @bind="rememberMe" id="rememberMe" />
+                <label for="rememberMe">Remember me</label>
+            </div>
+
+            <!-- Login Button -->
+            <button 
+                type="submit"
+                disabled="@isLoading"
+                class="login-button"
+            >
+                @if (isLoading)
+                {
+                    <span class="spinner"></span>
+                    <span>Signing in...</span>
+                }
+                else
+                {
+                    <span>🔓 Sign In</span>
+                }
+            </button>
+        </EditForm>
+
+        <!-- Divider -->
+        <div class="divider">
+            <div></div>
+            <span>OR</span>
+            <div></div>
+        </div>
+
+        <!-- Footer -->
+        <p class="footer-text">
+            Don't have an account? <a href="/">Contact Administrator</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+    private string? errorMessage;
+    private bool isLoading = false;
+    private bool showPassword = false;
+    private bool rememberMe = false;
+
+    private class LoginModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var result = await AuthService.LoginAsync(loginModel.Username, loginModel.Password);
+
+            if (result?.IsSuccessful == true)
+            {
+                // Set authentication state
+                AuthStateProvider.SetAuthenticationState(result);
+
+                // Redirect to home page
+                Navigation.NavigateTo("/", forceLoad: false);
+            }
+            else
+            {
+                errorMessage = result?.ErrorMessage ?? "Login failed. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

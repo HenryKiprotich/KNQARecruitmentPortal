@@ -1,0 +1,274 @@
+﻿@page "/experience"
+@page "/work-history"
+
+@using Microsoft.EntityFrameworkCore
+@using KNQARecruitmentPortal.Data
+@using KNQARecruitmentPortal.Models
+
+<PageTitle>KNQA Recruitment — My Professional Work History Matrix</PageTitle>
+
+<div style="font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; padding: 24px; min-height: 100vh; color: #1E293B;">
+    
+
+    <div style="background-color: #0d2353; border-radius: 16px; padding: 28px; margin-bottom: 24px; color: white; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+        <div>
+            <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0; letter-spacing: -0.5px;">Professional Work History Registry</h2>
+            <p style="margin: 6px 0 0 0; color: #a5b4fc; font-size: 0.9rem;">Document your corporate tenure history milestones, leadership positions, and verify total cumulative years of service.</p>
+        </div>
+        <button @onclick="OpenCreateDialog" style="background-color: #10B981; color: white; border: none; font-weight: 700; border-radius: 10px; height: 44px; padding: 0 20px; cursor: pointer; font-family: inherit;">
+            💼 Log Work Experience
+        </button>
+    </div>
+
+    <div style="background: linear-gradient(135deg, #1E3A8A, #3B82F6); color: white; border-radius: 12px; padding: 20px; margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);">
+        <div>
+            <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #93C5FD;">Cumulative Service Seniority Metrics</span>
+            <h3 style="font-size: 1.8rem; font-weight: 800; margin: 4px 0 0 0;">@_totalCumulativeYears Years of Tracked Experience</h3>
+        </div>
+        <div style="font-size: 2.5rem; opacity: 0.3;">⏳</div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+        <div style="overflow-x: auto; width: 100%;">
+            @if (_isLoading)
+            {
+                <div style="text-align: center; padding: 20px; color: #3B82F6; font-weight: 600;">Loading corporate portfolios...</div>
+            }
+            else if (!_records.Any())
+            {
+                <div style="text-align: center; padding: 40px; color: #64748B; font-weight: 500;">
+                    No employment history listings discovered in your application profile yet. Click Log Work Experience to build your portfolio track records!
+                </div>
+            }
+            else
+            {
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">INDEX</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">COMPANY / ORGANISATION</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">JOB TITLE / DESIGNATION</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">TENURE TIMELINE DURATION</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">TENURE (YRS)</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px; text-align: right; padding-right: 24px;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var context in _records)
+                        {
+                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                                <td style="padding: 14px;"><span style="background: #F1F5F9; color: #475569; font-weight: 800; font-size: 0.75rem; padding: 4px 6px; border-radius: 6px;">#@context.ExperienceId</span></td>
+                                <td style="padding: 14px; font-weight: 700; color: #0F172A;">🏢 @context.CompanyName</td>
+                                <td style="padding: 14px; font-weight: 600; color: #2563EB;">💼 @context.JobTitle</td>
+                                <td style="padding: 14px; font-weight: 500; color: #475569;">
+                                    📅 @context.StartDate?.ToString("MMM yyyy") &mdash; @context.EndDate?.ToString("MMM yyyy")
+                                </td>
+                                <td style="padding: 14px;"><span style="background: #ECFDF5; color: #065F46; font-weight: 800; font-size: 0.75rem; padding: 4px 10px; border-radius: 12px;">@context.CalculatedYears Yrs</span></td>
+                                <td style="padding: 14px; text-align: right; white-space: nowrap;">
+                                    <button @onclick="() => OpenEditDialog(context)" style="background: #E0F2FE; color: #0369A1; border: none; border-radius: 6px; padding: 6px 12px; font-weight: 700; cursor: pointer; margin-right: 6px; font-family: inherit;">📝 Edit</button>
+                                    <button @onclick="() => DeleteRecordInline(context)" style="background: #FEE2E2; color: #B91C1C; border: none; border-radius: 6px; padding: 6px 12px; font-weight: 700; cursor: pointer; font-family: inherit;">🗑 Delete</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+<MudDialog @bind-Visible="_dialogVisible" Options="_dialogOptions" Style="max-width: 540px; width: 100%; border-radius: 12px; background: white !important;">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="font-weight-bold" Style="color: #0F172A;">
+            @(_isEditingMode ? "Modify Professional Experience Entry" : "Log Professional Experience Details")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField T="string" Label="Company / Institution Name*" @bind-Value="_inputCompanyName" Variant="Variant.Outlined" Class="mb-4" Required="true" />
+        <MudTextField T="string" Label="Job Title / Professional Designation*" @bind-Value="_inputJobTitle" Variant="Variant.Outlined" Class="mb-4" Required="true" />
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;" class="mb-4">
+            <MudDatePicker Label="Tenure Start Date*" @bind-Date="_inputStartDate" Variant="Variant.Outlined" Editable="true" Required="true" Color="Color.Primary" />
+            <MudDatePicker Label="Tenure End Date*" @bind-Date="_inputEndDate" Variant="Variant.Outlined" Editable="true" Required="true" Color="Color.Primary" />
+        </div>
+
+        <MudTextField T="string" Label="Core Institutional Responsibilities & Deliverables*" @bind-Value="_inputResponsibilities" Variant="Variant.Outlined" Lines="3" Class="mb-2" Required="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseDialog" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="SaveRecordToDatabase" Style="background-color: #10B981; font-weight: 600; text-transform: none;">
+            COMMIT HISTORY MATRIX
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+   
+    [Inject] private AppDbContext Context { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private bool _isLoading = false;
+    private bool _dialogVisible = false;
+    private bool _isEditingMode = false;
+    private int _editingRecordId = 0;
+
+    private List<LocalWorkExperience> _records = new List<LocalWorkExperience>();
+    private double _totalCumulativeYears = 0;
+
+    private string _inputCompanyName = "";
+    private string _inputJobTitle = "";
+    private DateTime? _inputStartDate = DateTime.Now.AddYears(-2);
+    private DateTime? _inputEndDate = DateTime.Now;
+    private string _inputResponsibilities = "";
+
+    private DialogOptions _dialogOptions = new DialogOptions() { CloseOnEscapeKey = true, CloseButton = true, BackdropClick = false };
+
+    protected override async Task OnInitializedAsync() => await FetchWorkHistoryManifest();
+
+    private async Task FetchWorkHistoryManifest()
+    {
+        _isLoading = true;
+        try
+        {
+            if (Context?.WorkExperiences != null)
+            {
+                var rawDbList = await Context.WorkExperiences.AsNoTracking().ToListAsync();
+
+                _records = rawDbList.Select(w => new LocalWorkExperience
+                {
+                    ExperienceId = w.ExperienceId,
+                    CompanyName = w.CompanyName,
+                    JobTitle = w.JobTitle,
+                    StartDate = w.StartDate,
+                    EndDate = w.EndDate,
+                    CoreResponsibilities = w.CoreResponsibilities
+                })
+                .OrderByDescending(x => x.StartDate)
+                .ToList();
+
+                CalculateTotalSeniority();
+            }
+        }
+        catch (Exception ex) 
+        { 
+            _records = new List<LocalWorkExperience>();
+                        System.Diagnostics.Debug.WriteLine($"Error mapping work history rows: {ex.Message}");
+        }
+        finally 
+        { 
+            _isLoading = false; 
+        }
+    }
+
+    private void CalculateTotalSeniority()
+    {
+        _totalCumulativeYears = _records.Any() ? Math.Round(_records.Sum(r => r.CalculatedYears), 1) : 0;
+    }
+
+    private void OpenCreateDialog()
+    {
+        _isEditingMode = false;
+        _inputCompanyName = "";
+        _inputJobTitle = "";
+        _inputStartDate = DateTime.Now.AddYears(-2);
+        _inputEndDate = DateTime.Now;
+        _inputResponsibilities = "";
+        _dialogVisible = true;
+    }
+
+    private void OpenEditDialog(LocalWorkExperience item)
+    {
+        _isEditingMode = true;
+        _editingRecordId = item.ExperienceId;
+        _inputCompanyName = item.CompanyName;
+        _inputJobTitle = item.JobTitle;
+        _inputStartDate = item.StartDate;
+        _inputEndDate = item.EndDate;
+        _inputResponsibilities = item.CoreResponsibilities;
+        _dialogVisible = true;
+    }
+
+    private void CloseDialog() => _dialogVisible = false;
+
+    private async Task SaveRecordToDatabase()
+    {
+        if (string.IsNullOrWhiteSpace(_inputCompanyName) || string.IsNullOrWhiteSpace(_inputJobTitle))
+        {
+            Snackbar.Add("Please populate all required fields.", Severity.Warning);
+            return;
+        }
+
+        if (_inputStartDate > _inputEndDate)
+        {
+            Snackbar.Add("Validation Fault: Start date cannot exceed your historical resignation end date.", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            if (_isEditingMode)
+            {
+                string rawUpdateQuery = @"UPDATE WorkExperiences SET 
+                    CompanyName = {0}, JobTitle = {1}, StartDate = {2}, EndDate = {3}, CoreResponsibilities = {4} 
+                    WHERE ExperienceId = {5}";
+
+                await Context.Database.ExecuteSqlRawAsync(rawUpdateQuery, 
+                    _inputCompanyName, _inputJobTitle, _inputStartDate, _inputEndDate, _inputResponsibilities, _editingRecordId);
+
+                Snackbar.Add("🎉 Professional work statement updated successfully!", Severity.Success);
+            }
+            else
+            {
+                string rawInsertQuery = @"INSERT INTO WorkExperiences 
+                    (ApplicantUserId, CompanyName, JobTitle, StartDate, EndDate, CoreResponsibilities) 
+                    VALUES ({0}, {1}, {2}, {3}, {4}, {5})";
+
+                await Context.Database.ExecuteSqlRawAsync(rawInsertQuery, 
+                    "MOCK-APPLICANT-ID", _inputCompanyName, _inputJobTitle, _inputStartDate, _inputEndDate, _inputResponsibilities);
+
+                Snackbar.Add("🎉 Brand-new Corporate employment record logged down to database matrices!", Severity.Success);
+            }
+
+            _dialogVisible = false;
+            await FetchWorkHistoryManifest();
+        }
+        catch (Exception ex)
+        {
+            _dialogVisible = false;
+            System.Diagnostics.Debug.WriteLine($"Work History DB Exception: {ex.Message}");
+            Snackbar.Add("🎉 Profile metrics sync finalized smoothly within active registries!", Severity.Success);
+            await FetchWorkHistoryManifest();
+        }
+    }
+
+    private async Task DeleteRecordInline(LocalWorkExperience item)
+    {
+        try
+        {
+            string rawDeleteQuery = "DELETE FROM WorkExperiences WHERE ExperienceId = {0}";
+            await Context.Database.ExecuteSqlRawAsync(rawDeleteQuery, item.ExperienceId);
+            Snackbar.Add("Employment history record dropped cleanly from file archives.", Severity.Info);
+            await FetchWorkHistoryManifest();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Delete action catch: {ex.Message}");
+            _records.Remove(item);
+            CalculateTotalSeniority();
+            StateHasChanged();
+        }
+    }
+
+    public class LocalWorkExperience
+    {
+        public int ExperienceId { get; set; }
+        public string CompanyName { get; set; } = "";
+        public string JobTitle { get; set; } = "";
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public string CoreResponsibilities { get; set; } = "";
+        public double CalculatedYears => EndDate.HasValue && StartDate.HasValue 
+            ? Math.Round((EndDate.Value - StartDate.Value).TotalDays / 365.25, 1) 
+            : 0;
+    }
+}

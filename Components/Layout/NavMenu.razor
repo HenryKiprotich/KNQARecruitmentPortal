@@ -1,0 +1,197 @@
+@using KNQARecruitmentPortal.Services
+@using KNQARecruitmentPortal.Authentication
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IPermissionService PermissionService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+@inject ILogoutService LogoutService
+
+<CascadingAuthenticationState>
+    <div class="top-row ps-3 navbar navbar-dark" style="background-color: #091a3e;">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="" style="font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif;">🏛️ KNQA Portal</a>
+        </div>
+    </div>
+
+    <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+    <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').checked = false" style="background-color: #0d2353; min-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
+        <nav class="flex-column" style="padding: 12px 8px; flex-grow: 1;">
+
+            <!-- Public Navigation -->
+            <div class="nav-item px-3" style="margin-bottom: 4px;">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All" style="border-radius: 8px; font-weight: 600;">
+                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> 🏠 Portal Home
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3" style="margin-bottom: 4px;">
+                <NavLink class="nav-link" href="applicantprofile" style="border-radius: 8px; font-weight: 600;">
+                    <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> 🧑‍💼 My Profile Bio
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3" style="margin-bottom: 4px;">
+                <NavLink class="nav-link" href="qualifications" style="border-radius: 8px; font-weight: 600;">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> 🎓 Qualifications Matrix
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3" style="margin-bottom: 4px;">
+                <NavLink class="nav-link" href="work-history" style="border-radius: 8px; font-weight: 600;">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 💼 Work Experience
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3" style="margin-bottom: 4px;">
+                <NavLink class="nav-link" href="applications" style="border-radius: 8px; font-weight: 600;">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 📊 Tracking Dashboard
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3" style="margin-bottom: 4px;">
+                <NavLink class="nav-link" href="portfolio-attachments" style="border-radius: 8px; font-weight: 600;">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 🔐 Document Vault
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3" style="margin-bottom: 4px;">
+                <NavLink class="nav-link" href="interview-panel" style="border-radius: 8px; font-weight: 600;">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 📅 Interview Scheduler
+                </NavLink>
+            </div>
+
+            <!-- Admin Section Divider -->
+            <div style="border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 12px 0; padding-top: 12px;">
+                <div class="nav-item px-3" style="margin-bottom: 8px;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255, 255, 255, 0.6); font-weight: 600; letter-spacing: 0.5px;">
+                        ⚙️ Administration
+                    </span>
+                </div>
+
+                <!-- Users Management -->
+                <div class="nav-item px-3" style="margin-bottom: 4px;">
+                    <NavLink class="nav-link" href="admin/users" style="border-radius: 8px; font-weight: 600;">
+                        <span class="bi bi-people-fill" aria-hidden="true"></span> 👥 Manage Users
+                    </NavLink>
+                </div>
+
+                <!-- Roles Management -->
+                <div class="nav-item px-3" style="margin-bottom: 4px;">
+                    <NavLink class="nav-link" href="admin/roles" style="border-radius: 8px; font-weight: 600;">
+                        <span class="bi bi-shield-check" aria-hidden="true"></span> 🛡️ Manage Roles
+                    </NavLink>
+                </div>
+
+                <!-- Permissions Management -->
+                <div class="nav-item px-3" style="margin-bottom: 4px;">
+                    <NavLink class="nav-link" href="admin/permissions" style="border-radius: 8px; font-weight: 600;">
+                        <span class="bi bi-lock-fill" aria-hidden="true"></span> 🔒 Manage Permissions
+                    </NavLink>
+                </div>
+            </div>
+
+        </nav>
+
+        <!-- User Info & Logout Section -->
+        <div style="border-top: 1px solid rgba(255, 255, 255, 0.2); padding: 12px 8px; margin-top: auto;">
+            <AuthorizeView>
+                <Authorized>
+                    <!-- User Card -->
+                    <div style="
+                        background: rgba(255, 255, 255, 0.05);
+                        border-radius: 8px;
+                        padding: 12px;
+                        margin-bottom: 8px;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                    ">
+                        <div style="
+                            font-size: 0.8rem;
+                            color: rgba(255, 255, 255, 0.7);
+                            margin-bottom: 4px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                            font-weight: 600;
+                        ">👤 Logged In</div>
+                        <div style="
+                            font-weight: 700;
+                            color: white;
+                            font-size: 0.95rem;
+                            margin-bottom: 4px;
+                            word-break: break-word;
+                        ">@context.User.FindFirst("FullName")?.Value</div>
+                        <div style="
+                            font-size: 0.75rem;
+                            color: rgba(255, 255, 255, 0.6);
+                            display: flex;
+                            align-items: center;
+                            gap: 4px;
+                        ">
+                            <span>🔑</span>
+                            <span>@context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</span>
+                        </div>
+                    </div>
+
+                    <!-- Logout Button -->
+                    <button 
+                        @onclick="HandleLogout"
+                        style="
+                            width: 100%;
+                            padding: 10px 12px;
+                            background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            font-weight: 700;
+                            font-size: 0.9rem;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 6px;
+                        "
+                        onmouseover="this.style.opacity='0.9'; this.style.transform='scale(1.02)'"
+                        onmouseout="this.style.opacity='1'; this.style.transform='scale(1)'"
+                        title="Sign out of your account"
+                    >
+                        🚪 Logout
+                    </button>
+                </Authorized>
+                <NotAuthorized>
+                    <!-- Login Button -->
+                    <a href="/login" style="
+                        display: block;
+                        padding: 10px 12px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        font-weight: 700;
+                        font-size: 0.9rem;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        text-align: center;
+                        text-decoration: none;
+                    "
+                        onmouseover="this.style.opacity='0.9'; this.style.transform='scale(1.02)'"
+                        onmouseout="this.style.opacity='1'; this.style.transform='scale(1)'"
+                    >
+                        🔓 Login
+                    </a>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+
+    </div>
+</CascadingAuthenticationState>
+
+@code {
+    private async Task HandleLogout()
+    {
+        await LogoutService.LogoutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}

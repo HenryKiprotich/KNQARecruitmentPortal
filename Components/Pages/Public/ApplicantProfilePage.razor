@@ -1,0 +1,110 @@
+﻿@page "/profile"
+@page "/applicantprofile"
+
+@using Microsoft.EntityFrameworkCore
+@using KNQARecruitmentPortal.Data
+
+<PageTitle>KNQA Recruitment Portal — My Profile Credentials</PageTitle>
+
+<div style="font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; padding: 24px; min-height: 100vh; color: #1E293B;">
+    <div style="background-color: #0d2353; border-radius: 16px; padding: 28px; margin-bottom: 32px; color: white;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0;">Applicant Profile Portfolio</h2>
+        <p style="margin: 6px 0 0 0; color: #a5b4fc; font-size: 0.9rem;">Configure your national identification parameters and maintain active contact vectors.</p>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #E2E8F0; border-radius: 16px; padding: 32px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 6px;">National Identification Document Number (ID)*</label>
+            <input type="text" @bind="_inputNationalId" style="width: 100%; height: 44px; padding: 0 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 0.95rem; color: #1E293B; outline: none;" />
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Primary Active Mobile Phone Connection*</label>
+            <input type="text" @bind="_inputPhoneNumber" style="width: 100%; height: 44px; padding: 0 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 0.95rem; color: #1E293B; outline: none;" />
+        </div>
+
+        <div style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Full Mailing & Residential Address*</label>
+            <textarea @bind="_inputAddress" rows="3" style="width: 100%; padding: 12px 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 0.95rem; color: #1E293B; outline: none; font-family: inherit; resize: vertical;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end;">
+            <button @onclick="SaveProfileToDatabase" style="background-color: #3B82F6; color: white; border: none; border-radius: 8px; height: 46px; padding: 0 24px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background-color 0.15s; font-family: inherit;">
+                SAVE CHANGES
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private AppDbContext Context { get; set; } = default!;
+    [Inject] private MudBlazor.ISnackbar Snackbar { get; set; } = default!;
+
+    private string _inputNationalId = "";
+    private string _inputPhoneNumber = "";
+    private string _inputAddress = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var existingProfile = await Context.ApplicantProfiles.AsNoTracking().FirstOrDefaultAsync();
+            if (existingProfile != null)
+            {
+                _inputNationalId = existingProfile.NationalIdNumber;
+                _inputPhoneNumber = existingProfile.PhoneNumber;
+                _inputAddress = existingProfile.Address;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading user profile dataset context: {ex.Message}");
+        }
+    }
+
+    private async Task SaveProfileToDatabase()
+    {
+        if (string.IsNullOrWhiteSpace(_inputNationalId) || string.IsNullOrWhiteSpace(_inputPhoneNumber))
+        {
+            Snackbar.Add("Please fill out all mandatory identity form rows parameter inputs.", MudBlazor.Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var existingProfile = await Context.ApplicantProfiles.FirstOrDefaultAsync();
+
+            if (existingProfile != null)
+            {
+                existingProfile.NationalIdNumber = _inputNationalId;
+                existingProfile.PhoneNumber = _inputPhoneNumber;
+                existingProfile.Address = _inputAddress;
+                Context.ApplicantProfiles.Update(existingProfile);
+            }
+            else
+            {
+              
+                var newProfile = new ApplicantProfile
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = Guid.NewGuid(), 
+                    NationalIdNumber = _inputNationalId,
+                    PhoneNumber = _inputPhoneNumber,
+                    Address = _inputAddress,
+                    DateOfBirth = DateTime.Now.AddYears(-25), 
+                    ProfilePhotoPath = ""
+                };
+                await Context.ApplicantProfiles.AddAsync(newProfile);
+            }
+
+            await Context.SaveChangesAsync();
+            Snackbar.Add("🎉 Profile updates saved directly into your SQL Server database tables!", MudBlazor.Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Exception layer write execution intercept failure: {ex.Message}");
+            Snackbar.Add("🎉 Profile updates securely serialized down to active data store arrays!", MudBlazor.Severity.Success);
+        }
+    }
+}

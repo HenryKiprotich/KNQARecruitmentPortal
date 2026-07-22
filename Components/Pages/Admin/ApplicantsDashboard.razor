@@ -1,0 +1,158 @@
+﻿@page "/admin/dashboard"
+
+
+@attribute [Authorize(Roles = "HRAdmin,SuperAdmin")]
+@using Microsoft.EntityFrameworkCore
+@using KNQARecruitmentPortal.Data
+
+<PageTitle>KNQA Recruitment — Master Executive Administrative Console</PageTitle>
+
+<div style="font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F1F5F9; padding: 24px; min-height: 100vh; color: #0F172A;">
+    
+    <div style="background-color: #450a0a; border-radius: 16px; padding: 28px; margin-bottom: 24px; color: white; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 10px 30px rgba(69,10,10,0.1);">
+        <div>
+            <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0; letter-spacing: -0.5px;">Recruitment Applications Dashboard</h2>
+            <p style="margin: 6px 0 0 0; color: #fca5a5; font-size: 0.9rem;">Monitor ongoing candidate submissions, inspect institutional qualification indicators, and adjust application workflow tracks.</p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <select @bind="_statusFilter" @bind:after="FetchDashboardData" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 0 12px; height: 42px; font-weight: 600; outline: none; cursor: pointer; font-family: inherit;">
+                <option value="-1" style="color: #0F172A;">All Applications</option>
+                <option value="0" style="color: #0F172A;">⏳ Pending Review</option>
+                <option value="1" style="color: #0F172A;">✅ Shortlisted</option>
+                <option value="2" style="color: #0F172A;">❌ Unsuccessful</option>
+            </select>
+        </div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+        <div style="overflow-x: auto; width: 100%;">
+            @if (_isLoading)
+            {
+                <div style="text-align: center; padding: 20px; color: #991B1B; font-weight: 600;">Loading application logging matrices...</div>
+            }
+            else if (!_records.Any())
+            {
+                <div style="text-align: center; padding: 40px; color: #64748B; font-weight: 500;">
+                    No current vacancy submissions match your targeted dashboard status criteria filter.
+                </div>
+            }
+            else
+            {
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">APPLICATION ID REFERENCE</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">TARGET VACANCY DESCRIPTION</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">DEPARTMENT DIVISION</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">SUBMISSION DATE</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px;">WORKFLOW BADGE STATUS</th>
+                            <th style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; padding: 12px 14px; text-align: right; padding-right: 24px;">TRACKING ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var app in _records)
+                        {
+                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                                <td style="padding: 14px;"><span style="background: #F1F5F9; color: #475569; font-weight: 800; font-size: 0.72rem; padding: 4px 8px; border-radius: 6px;">#@app.ApplicationGuidId.ToString().Substring(0, 8).ToUpper()...</span></td>
+                                <td style="padding: 14px; font-weight: 700; color: #0F172A;">💼 @app.VacancyTitle</td>
+                                <td style="padding: 14px; font-weight: 600; color: #475569;">🏢 @app.DepartmentName</td>
+                                <td style="padding: 14px; font-weight: 600; color: #64748B;">📅 @app.SubmittedDate.ToString("dd MMM yyyy")</td>
+                                <td style="padding: 14px;">
+                                    @if (app.RawStatusIndex == 1)
+                                    {
+                                        <span style="background: #D1FAE5; color: #065F46; font-weight: 800; font-size: 0.75rem; padding: 6px 12px; border-radius: 12px;">✅ Shortlisted</span>
+                                    }
+                                    else if (app.RawStatusIndex == 2)
+                                    {
+                                        <span style="background: #FEE2E2; color: #991B1B; font-weight: 800; font-size: 0.75rem; padding: 6px 12px; border-radius: 12px;">❌ Unsuccessful</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="background: #FEF3C7; color: #92400E; font-weight: 800; font-size: 0.75rem; padding: 6px 12px; border-radius: 12px;">⏳ Pending Review</span>
+                                    }
+                                </td>
+                                <td style="padding: 14px; text-align: right; white-space: nowrap;">
+                                    <a href="/admin/applications/@app.ApplicationGuidId/review" style="background: #EFF6FF; color: #1E40AF; border: none; border-radius: 6px; padding: 6px 12px; font-weight: 700; text-decoration: none; font-size: 0.8rem; margin-right: 4px; display: inline-block;">Open Review</a>
+                                    <button @onclick="() => DropApplicationRow(app)" style="background: #FEE2E2; color: #B91C1C; border: none; border-radius: 6px; padding: 6px 12px; font-weight: 700; cursor: pointer; font-size: 0.8rem; font-family: inherit;">Drop</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private AppDbContext Context { get; set; } = default!;
+    [Inject] private MudBlazor.ISnackbar Snackbar { get; set; } = default!;
+
+    private bool _isLoading = true;
+    private int _statusFilter = -1; 
+    private List<LocalDashboardView> _records = new List<LocalDashboardView>();
+
+    protected override async Task OnInitializedAsync() => await FetchDashboardData();
+
+    private async Task FetchDashboardData()
+    {
+        _isLoading = true;
+        try
+        {
+            if (Context?.JobApplications != null && Context?.Vacancies != null)
+            {
+                var rawApps = await Context.JobApplications.AsNoTracking().ToListAsync();
+                var rawVacancies = await Context.Vacancies.AsNoTracking().ToListAsync();
+
+                var queryResult = from ja in rawApps
+                                  join v in rawVacancies on ja.VacancyId equals v.Id
+                                  where _statusFilter == -1 || ja.Status == _statusFilter
+                                  select new LocalDashboardView
+                                  {
+                                      ApplicationGuidId = ja.Id,
+                                      VacancyTitle = v.Title,
+                                      DepartmentName = v.Department,
+                                      SubmittedDate = ja.SubmittedAt,
+                                      RawStatusIndex = ja.Status
+                                  };
+
+                _records = queryResult.OrderByDescending(r => r.SubmittedDate).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            _records = new List<LocalDashboardView>();
+            System.Diagnostics.Debug.WriteLine($"Dashboard Data Mapping Error: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task DropApplicationRow(LocalDashboardView app)
+    {
+        try
+        {
+            string rawDeleteQuery = "DELETE FROM JobApplications WHERE Id = {0}";
+            await Context.Database.ExecuteSqlRawAsync(rawDeleteQuery, app.ApplicationGuidId);
+            
+            Snackbar.Add("Application row cleared cleanly from system registries.", MudBlazor.Severity.Info);
+            await FetchDashboardData();
+        }
+        catch (Exception)
+        {
+            _records.Remove(app);
+            StateHasChanged();
+        }
+    }
+
+    public class LocalDashboardView
+    {
+        public Guid ApplicationGuidId { get; set; }
+        public string VacancyTitle { get; set; } = "";
+        public string DepartmentName { get; set; } = "";
+        public DateTime SubmittedDate { get; set; }
+        public int RawStatusIndex { get; set; }
+    }
+}

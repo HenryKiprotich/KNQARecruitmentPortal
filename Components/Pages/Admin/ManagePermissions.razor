@@ -1,0 +1,126 @@
+@page "/admin/permissions"
+@using KNQARecruitmentPortal.Data
+@using KNQARecruitmentPortal.Models
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext Db
+
+<div class="container-fluid" style="padding: 24px;">
+    <!-- Page Header -->
+    <div class="mb-4">
+        <h2 style="font-weight: 800; color: #0f172a; margin-bottom: 8px;">🔐 Manage Permissions</h2>
+        <p style="color: #64748b; font-size: 0.95rem;">Define and manage system permissions that can be assigned to roles</p>
+    </div>
+
+    <!-- Create New Permission Card -->
+    <div class="card" style="border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); margin-bottom: 24px;">
+        <div class="card-header" style="background-color: #f8fafc; border: none; border-bottom: 1px solid #e2e8f0; padding: 20px; border-radius: 12px 12px 0 0;">
+            <h5 style="margin: 0; color: #0f172a; font-weight: 700;">➕ Create New Permission</h5>
+        </div>
+        <div class="card-body" style="padding: 24px;">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label" style="font-weight: 600; font-size: 0.875rem; color: #475569;">Permission Name</label>
+                    <input class="form-control" style="border-radius: 8px; border: 1px solid #cbd5e1;" placeholder="e.g. Applications.Review" @bind="newPermissionName" />
+                    <small style="color: #64748b;">Use dot notation: Resource.Action</small>
+                </div>
+                <div class="col-md-8 mb-3">
+                    <label class="form-label" style="font-weight: 600; font-size: 0.875rem; color: #475569;">Description</label>
+                    <input class="form-control" style="border-radius: 8px; border: 1px solid #cbd5e1;" placeholder="What does this permission allow?" @bind="newPermissionDescription" />
+                </div>
+            </div>
+            <div class="mt-3">
+                <button class="btn" style="background-color: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 600; padding: 10px 24px;" @onclick="AddPermissionAsync">
+                    <span>➕ Create Permission</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permissions Table Card -->
+    <div class="card" style="border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);">
+        <div class="card-header" style="background-color: #f8fafc; border: none; border-bottom: 1px solid #e2e8f0; padding: 20px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <h5 style="margin: 0; color: #0f172a; font-weight: 700;">📋 Permissions List (@(permissions?.Count ?? 0))</h5>
+            <span style="font-size: 0.875rem; color: #64748b;">@(permissions?.Count ?? 0) total permissions</span>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            @if (permissions is null)
+            {
+                <div style="padding: 30px; text-align: center;">
+                    <p style="color: #64748b;"><em>Loading permissions...</em></p>
+                </div>
+            }
+            else if (permissions.Count == 0)
+            {
+                <div style="padding: 30px; text-align: center;">
+                    <p style="color: #64748b;"><em>No permissions found. Create your first permission above.</em></p>
+                </div>
+            }
+            else
+            {
+                <div style="overflow-x: auto;">
+                    <table class="table table-hover" style="margin: 0; border-collapse: collapse;">
+                        <thead style="background-color: #f1f5f9; border-bottom: 2px solid #e2e8f0;">
+                            <tr>
+                                <th style="padding: 16px 20px; font-weight: 700; color: #475569; font-size: 0.875rem;">Permission Name</th>
+                                <th style="padding: 16px 20px; font-weight: 700; color: #475569; font-size: 0.875rem;">Description</th>
+                                <th style="padding: 16px 20px; font-weight: 700; color: #475569; font-size: 0.875rem; text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in permissions)
+                            {
+                                <tr style="border-bottom: 1px solid #e2e8f0;">
+                                    <td style="padding: 16px 20px;">
+                                        <code style="background-color: #f1f5f9; padding: 6px 12px; border-radius: 6px; font-weight: 600; color: #475569;">@p.PermissionName</code>
+                                    </td>
+                                    <td style="padding: 16px 20px; color: #64748b;">@(p.Description ?? "N/A")</td>
+                                    <td style="padding: 16px 20px; text-align: right;">
+                                        <button class="btn btn-sm" style="background-color: #fecaca; color: #7f1d1d; border: none; border-radius: 6px; font-weight: 600; font-size: 0.85rem;" @onclick="() => DeletePermissionAsync(p.Id)">
+                                            🗑️ Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Permission>? permissions;
+    private string newPermissionName = string.Empty;
+    private string? newPermissionDescription;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        permissions = (await Db.Permissions.ToListAsync()).OrderBy(p => p.PermissionName).ToList();
+    }
+
+    private async Task AddPermissionAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newPermissionName)) return;
+        var perm = new Permission { PermissionName = newPermissionName.Trim(), Description = newPermissionDescription };
+        Db.Permissions.Add(perm);
+        await Db.SaveChangesAsync();
+        newPermissionName = string.Empty;
+        newPermissionDescription = null;
+        await LoadAsync();
+    }
+
+    private async Task DeletePermissionAsync(int id)
+    {
+        var p = await Db.Permissions.FindAsync(id);
+        if (p == null) return;
+        Db.Permissions.Remove(p);
+        await Db.SaveChangesAsync();
+        await LoadAsync();
+    }
+}

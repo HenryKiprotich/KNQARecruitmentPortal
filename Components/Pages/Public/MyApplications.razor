@@ -1,0 +1,80 @@
+﻿@page "/my-applications"
+
+@using Microsoft.EntityFrameworkCore
+@using KNQARecruitmentPortal.Data
+@inject AppDbContext Context
+
+<PageTitle>KNQA Portal — Track My Applications</PageTitle>
+
+<div style="font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; padding: 24px; min-height: 100vh; color: #1E293B;">
+    <div style="background-color: #0d2353; border-radius: 16px; padding: 28px; margin-bottom: 24px; color: white;">
+        <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0;">My Active Career Submissions</h2>
+        <p style="margin: 6px 0 0 0; color: #a5b4fc; font-size: 0.9rem;">View real-time interview board bookings, timeline results, and qualification status reports.</p>
+    </div>
+
+    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+        @if (_displayRecords.Any())
+        {
+            @foreach (var app in _displayRecords)
+            {
+                <div style="border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-bottom: 16px; background-color: #F8FAFC;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                        <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #0F172A;">💼 @app.RoleName</h4>
+                        <span style="background-color: #EFF6FF; color: #1E40AF; font-weight: 800; font-size: 0.75rem; padding: 6px 12px; border-radius: 12px;">📊 State Index: @app.CurrentStatus</span>
+                    </div>
+
+                    @if (app.InterviewDate.HasValue)
+                    {
+                        <div style="background-color: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 14px; margin-top: 12px; color: #065F46;">
+                            <strong style="display: block; font-size: 0.9rem; font-weight: 800;">📅 INTERVIEW BOARD PANEL CONFIRMED!</strong>
+                            <span style="display: block; font-size: 0.85rem; margin-top: 2px;">Scheduled Date: <b>@app.InterviewDate?.ToString("dd MMM yyyy HH:mm")</b></span>
+                            <span style="display: block; font-size: 0.85rem;">Location Access: <a href="@app.MeetingLink" target="_blank" style="color: #047857; font-weight: 700; text-decoration: underline;">@app.MeetingLink</a></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="font-size: 0.82rem; color: #64748B; margin-top: 8px;">⏳ No active interview board slot maps logged against this timeline record path context folder yet.</div>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div style="text-align: center; color: #64748B; padding: 30px; font-weight: 500;">No filed vacancy application submissions located inside your candidate registry snapshot portfolio.</div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<UserAppRecordView> _displayRecords = new List<UserAppRecordView>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Context != null)
+        {
+            var rawApps = await Context.JobApplications.AsNoTracking().ToListAsync();
+            var rawVacancies = await Context.Vacancies.AsNoTracking().ToListAsync();
+            var rawSlots = await Context.InterviewSlots.AsNoTracking().ToListAsync();
+
+            _displayRecords = (from ja in rawApps
+                               join v in rawVacancies on ja.VacancyId equals v.Id
+                               join s in rawSlots on ja.Id equals s.JobApplicationId into slotsJoined
+                               from slot in slotsJoined.DefaultIfEmpty()
+                               select new UserAppRecordView
+                               {
+                                   RoleName = v.Title,
+                                   CurrentStatus = ja.Status == 1 ? "Shortlisted" : ja.Status == 2 ? "Rejected" : "Pending Review",
+                                   InterviewDate = slot?.ScheduledAt,
+                                   MeetingLink = slot?.LocationOrLink ?? ""
+                               }).ToList();
+        }
+    }
+
+    public class UserAppRecordView
+    {
+        public string RoleName { get; set; } = "";
+        public string CurrentStatus { get; set; } = "";
+        public DateTime? InterviewDate { get; set; }
+        public string MeetingLink { get; set; } = "";
+    }
+}
