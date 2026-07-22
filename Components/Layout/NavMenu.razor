@@ -27,71 +27,85 @@
                 </NavLink>
             </div>
 
-            <div class="nav-item px-3" style="margin-bottom: 4px;">
-                <NavLink class="nav-link" href="applicantprofile" style="border-radius: 8px; font-weight: 600;">
-                    <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> 🧑‍💼 My Profile Bio
-                </NavLink>
-            </div>
+            <!-- Applicant self-service -->
+            <AuthorizeView Roles="Applicant">
+                <div class="nav-item px-3" style="margin-bottom: 4px;">
+                    <NavLink class="nav-link" href="applicantprofile" style="border-radius: 8px; font-weight: 600;">
+                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> 🧑‍💼 My Profile Bio
+                    </NavLink>
+                </div>
 
-            <div class="nav-item px-3" style="margin-bottom: 4px;">
-                <NavLink class="nav-link" href="qualifications" style="border-radius: 8px; font-weight: 600;">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> 🎓 Qualifications Matrix
-                </NavLink>
-            </div>
+                <div class="nav-item px-3" style="margin-bottom: 4px;">
+                    <NavLink class="nav-link" href="qualifications" style="border-radius: 8px; font-weight: 600;">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> 🎓 Qualifications Matrix
+                    </NavLink>
+                </div>
 
-            <div class="nav-item px-3" style="margin-bottom: 4px;">
-                <NavLink class="nav-link" href="work-history" style="border-radius: 8px; font-weight: 600;">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 💼 Work Experience
-                </NavLink>
-            </div>
+                <div class="nav-item px-3" style="margin-bottom: 4px;">
+                    <NavLink class="nav-link" href="work-history" style="border-radius: 8px; font-weight: 600;">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 💼 Work Experience
+                    </NavLink>
+                </div>
 
-            <div class="nav-item px-3" style="margin-bottom: 4px;">
-                <NavLink class="nav-link" href="applications" style="border-radius: 8px; font-weight: 600;">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 📊 Tracking Dashboard
-                </NavLink>
-            </div>
+                <div class="nav-item px-3" style="margin-bottom: 4px;">
+                    <NavLink class="nav-link" href="portfolio-attachments" style="border-radius: 8px; font-weight: 600;">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 🔐 Document Vault
+                    </NavLink>
+                </div>
 
-            <div class="nav-item px-3" style="margin-bottom: 4px;">
-                <NavLink class="nav-link" href="portfolio-attachments" style="border-radius: 8px; font-weight: 600;">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 🔐 Document Vault
-                </NavLink>
-            </div>
+                <div class="nav-item px-3" style="margin-bottom: 4px;">
+                    <NavLink class="nav-link" href="my-applications" style="border-radius: 8px; font-weight: 600;">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 📊 Track My Applications
+                    </NavLink>
+                </div>
+            </AuthorizeView>
 
-            <div class="nav-item px-3" style="margin-bottom: 4px;">
-                <NavLink class="nav-link" href="interview-panel" style="border-radius: 8px; font-weight: 600;">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 📅 Interview Scheduler
-                </NavLink>
-            </div>
+            <!-- Recruiter / Admin staff functions -->
+            <AuthorizeView Roles="Admin,Recruiter">
+                <div class="nav-item px-3" style="margin-bottom: 4px;">
+                    <NavLink class="nav-link" href="admin/dashboard" style="border-radius: 8px; font-weight: 600;">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 📊 Applications Dashboard
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3" style="margin-bottom: 4px;">
+                    <NavLink class="nav-link" href="admin/interview-panel" style="border-radius: 8px; font-weight: 600;">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 📅 Interview Scheduler
+                    </NavLink>
+                </div>
+            </AuthorizeView>
 
             <!-- Admin Section Divider -->
-            <div style="border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 12px 0; padding-top: 12px;">
-                <div class="nav-item px-3" style="margin-bottom: 8px;">
-                    <span style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255, 255, 255, 0.6); font-weight: 600; letter-spacing: 0.5px;">
-                        ⚙️ Administration
-                    </span>
-                </div>
+            <AuthorizeView Roles="Admin">
+                <div style="border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 12px 0; padding-top: 12px;">
+                    <div class="nav-item px-3" style="margin-bottom: 8px;">
+                        <span style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255, 255, 255, 0.6); font-weight: 600; letter-spacing: 0.5px;">
+                            ⚙️ Administration
+                        </span>
+                    </div>
 
-                <!-- Users Management -->
-                <div class="nav-item px-3" style="margin-bottom: 4px;">
-                    <NavLink class="nav-link" href="admin/users" style="border-radius: 8px; font-weight: 600;">
-                        <span class="bi bi-people-fill" aria-hidden="true"></span> 👥 Manage Users
-                    </NavLink>
-                </div>
+                    <!-- Users Management -->
+                    <div class="nav-item px-3" style="margin-bottom: 4px;">
+                        <NavLink class="nav-link" href="admin/users" style="border-radius: 8px; font-weight: 600;">
+                            <span class="bi bi-people-fill" aria-hidden="true"></span> 👥 Manage Users
+                        </NavLink>
+                    </div>
 
-                <!-- Roles Management -->
-                <div class="nav-item px-3" style="margin-bottom: 4px;">
-                    <NavLink class="nav-link" href="admin/roles" style="border-radius: 8px; font-weight: 600;">
-                        <span class="bi bi-shield-check" aria-hidden="true"></span> 🛡️ Manage Roles
-                    </NavLink>
-                </div>
+                    <!-- Roles Management -->
+                    <div class="nav-item px-3" style="margin-bottom: 4px;">
+                        <NavLink class="nav-link" href="admin/roles" style="border-radius: 8px; font-weight: 600;">
+                            <span class="bi bi-shield-check" aria-hidden="true"></span> 🛡️ Manage Roles
+                        </NavLink>
+                    </div>
 
-                <!-- Permissions Management -->
-                <div class="nav-item px-3" style="margin-bottom: 4px;">
-                    <NavLink class="nav-link" href="admin/permissions" style="border-radius: 8px; font-weight: 600;">
-                        <span class="bi bi-lock-fill" aria-hidden="true"></span> 🔒 Manage Permissions
-                    </NavLink>
+                    <!-- Permissions Management -->
+                    <div class="nav-item px-3" style="margin-bottom: 4px;">
+                        <NavLink class="nav-link" href="admin/permissions" style="border-radius: 8px; font-weight: 600;">
+                            <span class="bi bi-lock-fill" aria-hidden="true"></span> 🔒 Manage Permissions
+                        </NavLink>
+                    </div>
                 </div>
-            </div>
+            </AuthorizeView>
 
         </nav>
 
