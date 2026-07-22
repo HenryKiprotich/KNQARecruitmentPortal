@@ -1,4 +1,5 @@
 @page "/login"
+@using Microsoft.AspNetCore.Components
 @using KNQARecruitmentPortal.Services
 @using KNQARecruitmentPortal.Authentication
 
@@ -113,6 +114,9 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
     private LoginModel loginModel = new();
     private string? errorMessage;
     private bool isLoading = false;
@@ -139,8 +143,9 @@
                 // Set authentication state
                 AuthStateProvider.SetAuthenticationState(result);
 
-                // Redirect to home page
-                Navigation.NavigateTo("/", forceLoad: false);
+                // Redirect back to the originally requested page, or home
+                var redirectTo = string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl;
+                Navigation.NavigateTo(redirectTo, forceLoad: false);
             }
             else
             {
